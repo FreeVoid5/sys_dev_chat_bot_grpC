@@ -1,1 +1,15 @@
 APIキーとか開発メモとかそういうのまとめるようノート
+
+
+飲食店検索
+楽天レシピカテゴリAPI
+https://webservice.rakuten.co.jp/documentation/recipe-category-list
+リクルート hot pepper API
+https://webservice.recruit.co.jp/doc/hotpepper/reference.html
+
+
+レシピ検索
+楽天レシピカテゴリAPI
+https://webservice.rakuten.co.jp/documentation/recipe-category-list
+楽天レシピカテゴリ別ランキングAPI
+https://webservice.rakuten.co.jp/documentation/recipe-category-ranking

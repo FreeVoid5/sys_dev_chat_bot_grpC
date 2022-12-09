@@ -67,8 +67,11 @@ def close(intent_request, session_attributes, fulfillment_state, message):
     }
 
 RestaurantCount=0
+Recipe=0
 
 def user_input(event, context):
+    global RestaurantCount
+    global Recipe
     print(event)
     intent_name = event['sessionState']['intent']['name'] # インテント名取得
     slots = get_slots(event)
@@ -77,15 +80,18 @@ def user_input(event, context):
     if str(intent_name) == "restaurant": # 飲食店インテントの場合
         if none_list != []: # 空きスロットがある場合
             session_attributes = get_session_attributes(event)
-            if JankenCount == 0:
-                text = "ジャンルIDを1つ選択し、入力してください　"
+            if RestaurantCount == 0:
+                text = "大ジャンルIDを1つ選択、もしくは入力してください"
+                RestaurantCount +=1
             else:
-                text = "ジャンルIDを入力してください"
-            JankenCount += 1
+                text = "中ジャンルIDを1つ選択、もしくは入力してください"
+                money ="予算を入力してください"    
             message =  {
                 'contentType': 'PlainText',
                 'content': text
             }
+            
+
             return elicit_slot(event, session_attributes, none_list[0], message)
         else:
             try:
@@ -99,10 +105,39 @@ def user_input(event, context):
                 else:
                     raise Exception
             except:
-                text = "あなたの反則負けです！"
+                text = "ジャンル、IDが取得できませんでした"
             else:
-                text = "私の手は"+lex_hand+"です。あなたの負けです！"
-            JankenCount = 0
+                text = "こちらの飲食店がヒットしました"
+            RestaurantCount = 0
+            message =  {
+                    'contentType': 'PlainText',
+                    'content': text
+                }
+            fulfillment_state = "Fulfilled"    
+            session_attributes = get_session_attributes(event)
+            return close(event, session_attributes, fulfillment_state, message)
+
+    elif str(intent_name) == "recipe": # レシピインテントの場合
+        if none_list != []: # 空きスロットがある場合
+            session_attributes = get_session_attributes(event)
+            if Recipe == 0:
+                text = "大ジャンルIDを1つ選択、もしくは入力してください"
+                Recipe +=1
+            else:
+                text = "中ジャンルIDを1つ選択、もしくは入力してください"   
+            message =  {
+                'contentType': 'PlainText',
+                'content': text
+            }
+            return elicit_slot(event, session_attributes, none_list[0], message)
+        else: # スロットが全て埋まっている場合
+            number = int(get_slot(event, "number")) # ユーザ入力を取得
+            if number%3 == 0:
+                text = "今日の運勢は最高です！"
+            elif number%3 == 1:
+                text = "今日の運勢は普通です！"
+            else:
+                text = "今日の運勢は最悪です！"
             message =  {
                     'contentType': 'PlainText',
                     'content': text

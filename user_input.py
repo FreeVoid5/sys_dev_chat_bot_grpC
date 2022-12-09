@@ -68,10 +68,12 @@ def close(intent_request, session_attributes, fulfillment_state, message):
 
 RestaurantCount=0
 Recipe=0
+money=0
 
 def user_input(event, context):
     global RestaurantCount
     global Recipe
+    global money
     print(event)
     intent_name = event['sessionState']['intent']['name'] # インテント名取得
     slots = get_slots(event)

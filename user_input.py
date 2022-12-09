@@ -65,9 +65,52 @@ def close(intent_request, session_attributes, fulfillment_state, message):
         'sessionId': intent_request['sessionId'],
         'requestAttributes': intent_request['requestAttributes'] if 'requestAttributes' in intent_request else None
     }
-def user_input(引数){
-# ここに処理
+
+RestaurantCount=0
+
+def user_input(event, context):
+    print(event)
+    intent_name = event['sessionState']['intent']['name'] # インテント名取得
+    slots = get_slots(event)
+    none_list = get_none_slot_list(slots) # 空きスロットのリスト取得
+    
+    if str(intent_name) == "restaurant": # 飲食店インテントの場合
+        if none_list != []: # 空きスロットがある場合
+            session_attributes = get_session_attributes(event)
+            if JankenCount == 0:
+                text = "ジャンルIDを1つ選択し、入力してください　"
+            else:
+                text = "ジャンルIDを入力してください"
+            JankenCount += 1
+            message =  {
+                'contentType': 'PlainText',
+                'content': text
+            }
+            return elicit_slot(event, session_attributes, none_list[0], message)
+        else:
+            try:
+                user_hand = int(get_slot(event, "hand")) # ユーザ入力を取得
+                if user_hand == 0:
+                    lex_hand = "パー"
+                elif user_hand == 1:
+                    lex_hand = "グー"
+                elif user_hand == 2:
+                    lex_hand = "チョキ"
+                else:
+                    raise Exception
+            except:
+                text = "あなたの反則負けです！"
+            else:
+                text = "私の手は"+lex_hand+"です。あなたの負けです！"
+            JankenCount = 0
+            message =  {
+                    'contentType': 'PlainText',
+                    'content': text
+                }
+            fulfillment_state = "Fulfilled"    
+            session_attributes = get_session_attributes(event)
+            return close(event, session_attributes, fulfillment_state, message)
+            
 
 
 
-}

@@ -1,15 +1,15 @@
 # カテゴリを取ってくる際に使う
-import recipe
-
-# レストランのデータを取ってくる処理
+# import recipe
 import requests
 import json
+import env
+
+# レストランのデータを取ってくる処理
 def get_restaurant(key,keyword):
     
- 
- 
+    key = env.get_hp_key()
     #urlの作成
-    urlbase = 'https://webservice.recruit.co.jp/hotpepper/gourmet/v1/?key=sample&large_area=Z011' #ランキングAPIのベースとなるURL
+    urlbase = 'https://webservice.recruit.co.jp/hotpepper/gourmet/v1/?key=' + key + '&lat= &lng=135.52&range=5&order=4' #ランキングAPIのベースとなるURL
  
     parameters = {
                 'key' : key,  #APIを利用するために割り当てられたキーを設定します。

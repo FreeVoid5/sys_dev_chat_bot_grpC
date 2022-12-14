@@ -98,12 +98,13 @@ def user_input(event, context):
         else:
             try:
                 user_hand = int(get_slot(event, "hand")) # ユーザ入力を取得
-                if user_hand == 0:
-                    lex_hand = "パー"
-                elif user_hand == 1:
-                    lex_hand = "グー"
-                elif user_hand == 2:
-                    lex_hand = "チョキ"
+                if (大ジャンルのカテゴリID) == text :
+                    genre=(中ジャンルを表示)
+                elif (中ジャンルのカテゴリID)== text:
+                    (中ジャンルの中から選択した結果を表示)
+                elif price<=money:
+                    (中ジャンルで絞り込んだ結果と金額で絞り込んだものを踏まえたものを表示)
+                
                 else:
                     raise Exception
             except:
@@ -133,13 +134,19 @@ def user_input(event, context):
             }
             return elicit_slot(event, session_attributes, none_list[0], message)
         else: # スロットが全て埋まっている場合
-            number = int(get_slot(event, "number")) # ユーザ入力を取得
-            if number%3 == 0:
-                text = "今日の運勢は最高です！"
-            elif number%3 == 1:
-                text = "今日の運勢は普通です！"
+            try:
+                user_hand = int(get_slot(event, "hand")) # ユーザ入力を取得
+                if (大ジャンルのカテゴリID) == text :
+                    genre=(中ジャンルを表示)
+                elif (中ジャンルのカテゴリID)== text:
+                    (中ジャンルの中から選択した結果を表示)        
+                else:
+                    raise Exception
+            except:
+                text = "ジャンル、IDが取得できませんでした"
             else:
-                text = "今日の運勢は最悪です！"
+                text = "こちらのレシピがヒットしました"
+            Recipe=0
             message =  {
                     'contentType': 'PlainText',
                     'content': text

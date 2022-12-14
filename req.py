@@ -15,6 +15,14 @@ def req(url):
       status = res.getcode() # ステータスコード
       return body
 
+def url_gen(base_url, param_dict):
+    out = base_url + '?'
+    # param_dict = 
+    for param in param_dict.keys():
+        out += param + '=' + param_dict[param] + '&'
+    out = out[:-1]
+    return out
+
 # 予算の例
 def budget():
     url = 'http://webservice.recruit.co.jp/hotpepper/budget/v1/?key=' + h_key + '&format=json'
@@ -24,3 +32,12 @@ def budget():
 def get_l_cat():
     url = 'https://app.rakuten.co.jp/services/api/Recipe/CategoryList/20170426?format=json&applicationId=' + r_key + '&categoryType=large'
     return req(url)
+
+url = 'https://webservice.recruit.co.jp/hotpepper/gourmet/v1/'
+
+parameters = {
+            'key' : h_key,  #APIを利用するために割り当てられたキーを設定します。
+            'format' : 'json'
+}
+
+print(url_gen(url, parameters))

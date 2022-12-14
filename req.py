@@ -33,11 +33,11 @@ def get_l_cat():
     url = 'https://app.rakuten.co.jp/services/api/Recipe/CategoryList/20170426?format=json&applicationId=' + r_key + '&categoryType=large'
     return req(url)
 
-url = 'https://webservice.recruit.co.jp/hotpepper/gourmet/v1/'
+# baseurl = 'https://webservice.recruit.co.jp/hotpepper/gourmet/v1/'
 
-parameters = {
-            'key' : h_key,  #APIを利用するために割り当てられたキーを設定します。
-            'format' : 'json'
-}
+# parameters = {
+#             'key' : h_key,  #APIを利用するために割り当てられたキーを設定します。
+#             'format' : 'json'
+# }
 
-print(url_gen(url, parameters))
+# print(url_gen(baseurl, parameters))

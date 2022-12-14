@@ -1,6 +1,6 @@
 
 #def get_large_category():
-L
+
 #def get_middle_category():
 
 #def get_recipe():

@@ -83,10 +83,12 @@ def user_input(event, context):
         if none_list != []: # 空きスロットがある場合
             session_attributes = get_session_attributes(event)
             if RestaurantCount == 0:
-                text = "大ジャンルIDを1つ選択、もしくは入力してください"
+                # ここで大genreを表示
+                print(restaurant_large_genre)
+                text = "大ジャンルIDを入力してください"
                 RestaurantCount +=1
             else:
-                text = "中ジャンルIDを1つ選択、もしくは入力してください"
+                text = "中ジャンルIDを入力してください"
                 money ="予算を入力してください"    
             message =  {
                 'contentType': 'PlainText',
@@ -124,10 +126,11 @@ def user_input(event, context):
         if none_list != []: # 空きスロットがある場合
             session_attributes = get_session_attributes(event)
             if Recipe == 0:
-                text = "大ジャンルIDを1つ選択、もしくは入力してください"
+                print(recipe_large_genre)
+                text = "大ジャンルIDを入力してください"
                 Recipe +=1
             else:
-                text = "中ジャンルIDを1つ選択、もしくは入力してください"   
+                text = "中ジャンルIDを入力してください"   
             message =  {
                 'contentType': 'PlainText',
                 'content': text

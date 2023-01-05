@@ -1,3 +1,7 @@
+import random
+
+
+import time
 import os
 import json
 from urllib import request, parse
@@ -6,12 +10,20 @@ r_key = os.environ.get('RAKUTEN_API_KEY')
 
 def req(url):
     with request.urlopen(url) as res:
-    #   body = json.loads(res.read()) # レスポンスボディ
+        body = json.loads(res.read()) # レスポンスボディ
     #   headers = res.getheaders() # ヘッダー(dict)
     #   status = res.getcode() # ステータスコード
-        body = 0
+        # body = 0
         return body
-      
+
+def url_gen(base_url, param_dict):
+    out = base_url + '?'
+    # param_dict = 
+    for param in param_dict.keys():
+        out += str(param) + '=' + str(param_dict[param]) + '&'
+    out = out[:-1]
+    return out
+
 def budget():
     url = 'http://webservice.recruit.co.jp/hotpepper/budget/v1/?key=' + h_key + '&format=json'
     return req(url)
@@ -19,6 +31,17 @@ def budget():
 def get_l_cat():
     url = 'https://app.rakuten.co.jp/services/api/Recipe/CategoryList/20170426?format=json&applicationId=' + r_key + '&categoryType=large'
     return req(url)
+
+hp_baseurl = 'https://webservice.recruit.co.jp/hotpepper/gourmet/v1/'
+rak_baseurl = 'https://app.rakuten.co.jp/services/api/Recipe/CategoryList/20170426'
+recipe_baseurl = 'https://app.rakuten.co.jp/services/api/Recipe/CategoryRanking/20170426'
+
+h_parameters = {
+    'key' : h_key,
+    'format' : 'json'
+}
+
+cat = ('large', 'medium', 'small')
 
 
 
@@ -91,11 +114,11 @@ def close(intent_request, session_attributes, fulfillment_state, message):
     }
 
 JankenCount = 0
-
+cnt = 0
 
 
 def lambda_handler(event, context):
-    global JankenCount
+    global JankenCount, cnt
     print(event)
     intent_name = event['sessionState']['intent']['name'] # インテント名取得
     slots = get_slots(event)
@@ -152,26 +175,107 @@ def lambda_handler(event, context):
             session_attributes = get_session_attributes(event)
             return close(event, session_attributes, fulfillment_state, message)
             
-    elif str(intent_name) == "Recipe": # 占いインテントの場合
-        if none_list != []: # 空きスロットがある場合
+    elif str(intent_name) == "Recipe": # レシピインテントの場合
+        # if none_list != []: # 空きスロットがある場合
             session_attributes = get_session_attributes(event)
-            # text = budget()
-            req('http://aso2101106.pecori.jp/something/DB.php?name=aaa&point=1&streak=1')
-            text = '数字を入力してください'
-            # text = {"type": "location", "title": "my location", "address": "〒160-0004 東京都新宿区四谷一丁目6番1号", "latitude": 35.687574, "longitude": 139.72922}
-            # text = json.dumps(text)
-            message =  {
-                'contentType': 'PlainText',
-                'content': text
-            }
-            return elicit_slot(event, session_attributes, none_list[0], message)
-        else: # スロットが全て埋まっている場合
-            number = int(get_slot(event, "number")) # ユーザ入力を取得
-            text = budget()
-            message =  {
+            if cnt == 0:
+                # text = get_l_cat()
+                # req('http://aso2101106.pecori.jp/something/DB.php?name=aaa&point=1&streak=1')
+                # text = '数字を入力してください'
+                # text = {"type": "location", "title": "my location", "address": "〒160-0004 東京都新宿区四谷一丁目6番1号", "latitude": 35.687574, "longitude": 139.72922}
+                # text = json.dumps(text)
+                r_parameters = {
+                    'applicationId' : r_key,
+                    'format' : 'json',
+                    'categoryType' : cat[0],
+                    'formatVersion' : 2
+                }
+                url = url_gen(rak_baseurl, r_parameters)
+                res = req(url)
+                text = ""
+                for r in res['result']['large']:
+                    # print("Id:" + r['categoryId'])
+                    # print("name:" + r['categoryName'])
+                    # print("url:" + r['categoryUrl'])
+                    text = text + "Id:" + r['categoryId'] + "\n"
+                    text = text + "name:" + r['categoryName'] + "\n"
+                    # text = text + "url:" + r['categoryUrl'] + "\n"
+                text = "以下のカテゴリ一覧から興味のあるカテゴリを選んでカテゴリIDを入力してください。" + text[:-1]
+                cnt += 1
+                message =  {
                     'contentType': 'PlainText',
                     'content': text
                 }
-            fulfillment_state = "Fulfilled"    
-            session_attributes = get_session_attributes(event)
-            return close(event, session_attributes, fulfillment_state, message)
+                return elicit_slot(event, session_attributes, none_list[0], message)
+            elif cnt == 1:
+                number = int(get_slot(event, "number")) # ユーザ入力を取得
+                
+                r_parameters = {
+                    'applicationId' : r_key,
+                    'format' : 'json',
+                    'categoryType' : cat[1],
+                    'formatVersion' : 2
+                }
+                
+                url = url_gen(rak_baseurl, r_parameters)
+                res2 = req(url)
+                text = ""
+                for r in res2['result']['medium']:
+                    if str(number) == r['parentCategoryId']:
+                        text += "Id:" + str(r['categoryId']) + "\n"
+                        text += "name:" + str(r['categoryName']) + "\n"
+                        # text += "url:" + str(r['categoryUrl']) + "\n"
+                        # text += "pcat:" + str(r['parentCategoryId']) + "\n"
+                text = "以下のカテゴリから詳細なカテゴリを選択してください。\n" + text[:-1]
+                if text == "":
+                    text = "該当するカテゴリは見つかりませんでした。"
+                cnt += 1
+                message =  {
+                    'contentType': 'PlainText',
+                    'content': text
+                }
+                return elicit_slot(event, session_attributes, none_list[0], message)
+            else:
+                number = int(get_slot(event, "number2")) # ユーザ入力を取得
+                r_parameters = {
+                        'applicationId' : r_key,
+                        'format' : 'json',
+                        'categoryType' : cat[1],
+                        'formatVersion' : 2
+                }
+                
+                url = url_gen(rak_baseurl, r_parameters)
+                res2 = req(url)
+                cId = ""
+                for r in res2['result']['medium']:
+                    if str(number) == str(r['categoryId']):
+                        cId = str(r['parentCategoryId']) + "-" + str(r['categoryId'])
+                        break
+                rc_parameters = {
+                    'applicationId' : r_key,
+                    'format' : 'json',
+                    'formatVersion' : 2,
+                    'categoryId' : cId
+                }
+                
+                url = url_gen(recipe_baseurl, rc_parameters)
+                time.sleep(0.5)
+                res3 = req(url)
+                text = ""
+                for r in res3['result']:
+                    text += "title:" + str(r['recipeTitle']) + "\n"
+                    text += "url:" + str(r['recipeUrl']) + "\n"
+                    text += '\n'
+                text = "これらのレシピが見つかりました。\n\n" + text[:-2]
+                if text == "":
+                    text = "該当するレシピが見つかりませんでした。"
+                # text = str(a) + 'a'
+                print(text)
+                cnt = 0
+                message =  {
+                        'contentType': 'PlainText',
+                        'content': text
+                    }
+                fulfillment_state = "Fulfilled"    
+                session_attributes = get_session_attributes(event)
+                return close(event, session_attributes, fulfillment_state, message)

@@ -69,11 +69,15 @@ def close(intent_request, session_attributes, fulfillment_state, message):
 RestaurantCount=0
 Recipe=0
 money=0
+#restaurant_large_genre
+
 
 def user_input(event, context):
     global RestaurantCount
     global Recipe
     global money
+    global restaurant_large_genre
+    global recipe_large_genre
     print(event)
     intent_name = event['sessionState']['intent']['name'] # インテント名取得
     slots = get_slots(event)
@@ -84,10 +88,15 @@ def user_input(event, context):
             session_attributes = get_session_attributes(event)
             if RestaurantCount == 0:
                 # ここで大genreを表示
+                # large_genreがない場合、APIのコードと擦り合わせる必要があり
                 print(restaurant_large_genre)
                 text = "大ジャンルIDを入力してください"
                 RestaurantCount +=1
             else:
+                # ここで中genreを表示
+                # ここも同じようにlarge_mediumがない場合APIのコードと擦り合わせる
+                # もしかしたら、ここのコード要らないかも？
+                print(restaurant_medium_genre)
                 text = "中ジャンルIDを入力してください"
                 money ="予算を入力してください"    
             message =  {
@@ -100,7 +109,7 @@ def user_input(event, context):
         else:
             try:
                 user_hand = int(get_slot(event, "hand")) # ユーザ入力を取得
-                if (大ジャンルのカテゴリID) == text :
+                if (categoryIdD) == text :# 大ジャンルのカテゴリID、合っているか分からない
                     genre=(中ジャンルを表示)
                 elif (中ジャンルのカテゴリID)== text:
                     (中ジャンルの中から選択した結果を表示)

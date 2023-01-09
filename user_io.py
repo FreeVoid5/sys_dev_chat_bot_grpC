@@ -13,7 +13,7 @@ def req(url):
     matchedList = re.findall(regex,url)
     for m in matchedList:
         url = url.replace(m, parse.quote_plus(m, encoding="utf-8"))
-    time.sleep(0.5)
+    time.sleep(0.3)
     with request.urlopen(url) as res:
         body = json.loads(res.read()) # レスポンスボディ
     #   headers = res.getheaders() # ヘッダー(dict)
@@ -31,10 +31,12 @@ def url_gen(base_url, param_dict):
 
 def budget():
     url = 'http://webservice.recruit.co.jp/hotpepper/budget/v1/?key=' + h_key + '&format=json'
+    # time.sleep(0.3)
     return req(url)
 
 def get_l_cat():
     url = 'https://app.rakuten.co.jp/services/api/Recipe/CategoryList/20170426?format=json&applicationId=' + r_key + '&categoryType=large'
+    # time.sleep(0.3)
     return req(url)
 
 hp_baseurl = 'https://webservice.recruit.co.jp/hotpepper/gourmet/v1/'
@@ -55,6 +57,7 @@ def get_restaurant(keyword,range,lat,lng,budget):
     }
     url = url_gen(hp_baseurl, parameters)
     print(url)
+    # time.sleep(0.3)
     return req(url)
 
 
@@ -133,10 +136,11 @@ def close(intent_request, session_attributes, fulfillment_state, message):
 
 restCnt = 0
 recipeCnt = 0
-keyw = ""
+keyw = {}
+lcat = 0
 
 def lambda_handler(event, context):
-    global restCnt, recipeCnt, keyw
+    global restCnt, recipeCnt, keyw, lcat
     print(event)
     intent_name = event['sessionState']['intent']['name'] # インテント名取得
     slots = get_slots(event)
@@ -163,16 +167,17 @@ def lambda_handler(event, context):
                     'formatVersion' : 2
                 }
                 url = url_gen(rak_baseurl, r_parameters)
+                # time.sleep(0.3)
                 res = req(url)
                 text = ""
                 for r in res['result']['large']:
                     # print("Id:" + r['categoryId'])
                     # print("name:" + r['categoryName'])
                     # print("url:" + r['categoryUrl'])
-                    text = text + "Id:" + r['categoryId'] + "\n"
-                    text = text + "name:" + r['categoryName'] + "\n"
+                    text = text + "Id:" + r['categoryId'] + "　"
+                    text = text + "" + r['categoryName'] + "\n"
                     # text = text + "url:" + r['categoryUrl'] + "\n"
-                text = "以下のカテゴリ一覧から興味のあるカテゴリを選んでカテゴリIDを入力してください。" + text[:-1]
+                text = "以下のカテゴリ一覧から興味のあるカテゴリを選んでカテゴリIDを入力してください。\n" + text[:-1]
                 restCnt += 1
                 message =  {
                     'contentType': 'PlainText',
@@ -190,12 +195,14 @@ def lambda_handler(event, context):
                 }
                 
                 url = url_gen(rak_baseurl, r_parameters)
+                # time.sleep(0.3)
                 res2 = req(url)
                 text = ""
                 for r in res2['result']['medium']:
                     if str(number) == r['parentCategoryId']:
-                        text += "Id:" + str(r['categoryId']) + "\n"
-                        text += "name:" + str(r['categoryName']) + "\n"
+                        text += "Id:" + str(r['categoryId']) + "　"
+                        text += "" + str(r['categoryName']) + "\n"
+                        keyw[str(r['categoryId'])] = str(r['categoryName'])
                         # text += "url:" + str(r['categoryUrl']) + "\n"
                         # text += "pcat:" + str(r['parentCategoryId']) + "\n"
                 text = "以下のカテゴリから詳細なカテゴリを選択してください。\n" + text[:-1]
@@ -208,12 +215,12 @@ def lambda_handler(event, context):
                 }
                 return elicit_slot(event, session_attributes, "num2", message)
             elif restCnt == 2:
-                keyw = int(get_slot(event, "num2")) # ユーザ入力を取得
+                num2 = int(get_slot(event, "num2")) # ユーザ入力を取得
                 bud = budget()
                 text = ""
                 for i in range(len(bud['results']['budget'])):
-                        text += 'ID:' + bud['results']['budget'][i]['code'][-2:] + '\n'
-                        text += '予算:' + bud['results']['budget'][i]['name'] + '\n'
+                        text += 'ID:' + bud['results']['budget'][i]['code'][-2:] + '　'
+                        text += '' + bud['results']['budget'][i]['name'] + '\n'
                 text = "以下の予算一覧から予算を選択してください。\n" + text[:-1]
                 if text == "":
                     text = "該当するカテゴリは見つかりませんでした。"
@@ -226,21 +233,22 @@ def lambda_handler(event, context):
             else:
                 number = get_slot(event, "num3") # ユーザ入力を取得
                 number = "B0" + str(number)
-                keyid = int(get_slot(event, "num2"))
-                r_parameters = {
-                        'applicationId' : r_key,
-                        'format' : 'json',
-                        'categoryType' : cat[1],
-                        'formatVersion' : 2
-                }
+                keyid = str(get_slot(event, "num2"))
+                # r_parameters = {
+                #         'applicationId' : r_key,
+                #         'format' : 'json',
+                #         'categoryType' : cat[1],
+                #         'formatVersion' : 2
+                # }
                 
-                url = url_gen(rak_baseurl, r_parameters)
-                res2 = req(url)
-                keyword = ""
-                for r in res2['result']['medium']:
-                    if str(keyid) == str(r['categoryId']):
-                        keyword = r['categoryName']
-                        break
+                # url = url_gen(rak_baseurl, r_parameters)
+                # time.sleep(0.3)
+                # res2 = req(url)
+                keyword = keyw[keyid]
+                # for r in res2['result']['medium']:
+                #     if str(keyid) == str(r['categoryId']):
+                #         keyword = r['categoryName']
+                #         break
                 res3 = get_restaurant(keyword=keyword, range='3', lat='33.58494021588118', lng='130.42429733578305', budget=number)
                 # res3 = req("https://webservice.recruit.co.jp/hotpepper/gourmet/v1/?key=" + h_key + "&lat=33.583511&lng=130.41898336&keyword=牛肉&format=json")
                 text = ""
@@ -281,22 +289,23 @@ def lambda_handler(event, context):
                     'formatVersion' : 2
                 }
                 url = url_gen(rak_baseurl, r_parameters)
+                # time.sleep(0.3)
                 res = req(url)
                 text = ""
                 for r in res['result']['large']:
                     # print("Id:" + r['categoryId'])
                     # print("name:" + r['categoryName'])
                     # print("url:" + r['categoryUrl'])
-                    text = text + "Id:" + r['categoryId'] + "\n"
-                    text = text + "name:" + r['categoryName'] + "\n"
+                    text = text + "Id:" + r['categoryId'] + "　"
+                    text = text + "" + r['categoryName'] + "\n"
                     # text = text + "url:" + r['categoryUrl'] + "\n"
-                text = "以下のカテゴリ一覧から興味のあるカテゴリを選んでカテゴリIDを入力してください。" + text[:-1]
+                text = "以下のカテゴリ一覧から興味のあるカテゴリを選んでカテゴリIDを入力してください。\n" + text[:-1]
                 recipeCnt += 1
                 message =  {
                     'contentType': 'PlainText',
                     'content': text
                 }
-                return elicit_slot(event, session_attributes, none_list[0], message)
+                return elicit_slot(event, session_attributes, "number", message)
             elif recipeCnt == 1:
                 number = int(get_slot(event, "number")) # ユーザ入力を取得
                 
@@ -308,12 +317,13 @@ def lambda_handler(event, context):
                 }
                 
                 url = url_gen(rak_baseurl, r_parameters)
+                # time.sleep(0.3)
                 res2 = req(url)
                 text = ""
                 for r in res2['result']['medium']:
                     if str(number) == r['parentCategoryId']:
-                        text += "Id:" + str(r['categoryId']) + "\n"
-                        text += "name:" + str(r['categoryName']) + "\n"
+                        text += "Id:" + str(r['categoryId']) + "　"
+                        text += "" + str(r['categoryName']) + "\n"
                         # text += "url:" + str(r['categoryUrl']) + "\n"
                         # text += "pcat:" + str(r['parentCategoryId']) + "\n"
                 text = "以下のカテゴリから詳細なカテゴリを選択してください。\n" + text[:-1]
@@ -324,9 +334,10 @@ def lambda_handler(event, context):
                     'contentType': 'PlainText',
                     'content': text
                 }
-                return elicit_slot(event, session_attributes, none_list[0], message)
+                return elicit_slot(event, session_attributes, "number2", message)
             else:
-                number = int(get_slot(event, "number2")) # ユーザ入力を取得
+                numb1 = get_slot(event, "number")
+                number = get_slot(event, "number2") # ユーザ入力を取得
                 r_parameters = {
                         'applicationId' : r_key,
                         'format' : 'json',
@@ -335,12 +346,14 @@ def lambda_handler(event, context):
                 }
                 
                 url = url_gen(rak_baseurl, r_parameters)
-                res2 = req(url)
-                cId = ""
-                for r in res2['result']['medium']:
-                    if str(number) == str(r['categoryId']):
-                        cId = str(r['parentCategoryId']) + "-" + str(r['categoryId'])
-                        break
+                # time.sleep(0.2)
+                # res2 = req(url)
+                # cId = ""
+                # for r in res2['result']['medium']:
+                #     if str(number) == str(r['categoryId']):
+                #         cId = str(r['parentCategoryId']) + "-" + str(r['categoryId'])
+                #         break
+                cId = str(numb1) + "-" + str(number)
                 rc_parameters = {
                     'applicationId' : r_key,
                     'format' : 'json',
@@ -352,8 +365,8 @@ def lambda_handler(event, context):
                 res3 = req(url)
                 text = ""
                 for r in res3['result']:
-                    text += "title:" + str(r['recipeTitle']) + "\n"
-                    text += "url:" + str(r['recipeUrl']) + "\n"
+                    text += "タイトル:" + str(r['recipeTitle']) + "\n"
+                    text += "URL:" + str(r['recipeUrl']) + "\n"
                     text += '\n'
                 text = "これらのレシピが見つかりました。\n\n" + text[:-2]
                 if text == "":
